@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    background-color: #09090f;
+    color: #f4f4f8;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    outline-color: #22d3ee;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes kenBurnsIn {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.07) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@keyframes kenBurnsPanRight {
+  0% {
+    transform: scale(1.05) translate3d(-2%, 0, 0);
+  }
+  100% {
+    transform: scale(1.09) translate3d(2%, -1%, 0);
+  }
+}
+
+@keyframes kenBurnsZoomOut {
+  0% {
+    transform: scale(1.1) translate3d(1%, -1%, 0);
+  }
+  100% {
+    transform: scale(1.01) translate3d(0, 0, 0);
+  }
+}
+
+.animate-kb-in {
+  animation: kenBurnsIn 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-kb-pan {
+  animation: kenBurnsPanRight 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-kb-out {
+  animation: kenBurnsZoomOut 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kb-in,
+  .animate-kb-pan,
+  .animate-kb-out {
+    animation: none;
+  }
+}

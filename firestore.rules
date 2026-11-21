@@ -1,0 +1,307 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'harzyyouness75@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // Entity Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'streamerHandle',
+          'bio',
+          'preferredFormat',
+          'newsletterOptIn',
+          'role',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        isValidOptionalString(data, 'streamerHandle', 60) &&
+        isValidOptionalString(data, 'bio', 400) &&
+        (!('preferredFormat' in data) || (data.preferredFormat is string && data.preferredFormat in ['16:9', '9:16'])) &&
+        (!('newsletterOptIn' in data) || data.newsletterOptIn is bool) &&
+        data.role is string && data.role in ['member', 'admin'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['uid', 'email', 'grantedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'grantedAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+        data.grantedAt is timestamp;
+    }
+
+    function isValidVideoItem(data) {
+      return data.keys().hasAll(['code', 'title', 'category', 'aspectRatio', 'durationLabel', 'status', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'code',
+          'title',
+          'subtitle',
+          'category',
+          'aspectRatio',
+          'durationLabel',
+          'status',
+          'videoUrl',
+          'posterUrl',
+          'updatedAt'
+        ]) &&
+        data.code is string && data.code.size() >= 1 && data.code.size() <= 8 &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+        isValidOptionalString(data, 'subtitle', 260) &&
+        data.category is string && data.category in ['principale', 'modules', 'streamer', 'social'] &&
+        data.aspectRatio is string && data.aspectRatio in ['16:9', '9:16'] &&
+        data.durationLabel is string && data.durationLabel.size() >= 1 && data.durationLabel.size() <= 20 &&
+        data.status is string && data.status in ['storyboard', 'published'] &&
+        isValidOptionalString(data, 'videoUrl', 500) &&
+        isValidOptionalString(data, 'posterUrl', 500) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMediaAsset(data) {
+      return data.keys().hasAll(['title', 'moduleName', 'category', 'imageUrl', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'moduleName', 'category', 'imageUrl', 'caption', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+        data.moduleName is string && data.moduleName.size() >= 2 && data.moduleName.size() <= 80 &&
+        data.category is string && data.category in ['capture-app', 'streamer-obs', 'studio-photo'] &&
+        data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 500 &&
+        isValidOptionalString(data, 'caption', 300) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSiteCopy(data) {
+      return data.keys().hasAll(['heroTitle', 'heroSubtitle', 'primaryCtaLabel', 'pricingHeadline', 'gumroadUrl', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'heroTitle',
+          'heroSubtitle',
+          'primaryCtaLabel',
+          'pricingHeadline',
+          'pricingNote',
+          'gumroadUrl',
+          'updatedAt'
+        ]) &&
+        data.heroTitle is string && data.heroTitle.size() >= 5 && data.heroTitle.size() <= 160 &&
+        data.heroSubtitle is string && data.heroSubtitle.size() >= 10 && data.heroSubtitle.size() <= 360 &&
+        data.primaryCtaLabel is string && data.primaryCtaLabel.size() >= 2 && data.primaryCtaLabel.size() <= 60 &&
+        data.pricingHeadline is string && data.pricingHeadline.size() >= 4 && data.pricingHeadline.size() <= 140 &&
+        isValidOptionalString(data, 'pricingNote', 360) &&
+        data.gumroadUrl is string && data.gumroadUrl.size() >= 10 && data.gumroadUrl.size() <= 300 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidNewsArticle(data) {
+      return data.keys().hasAll(['title', 'category', 'summary', 'body', 'publishedLabel', 'status', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'category', 'summary', 'body', 'publishedLabel', 'status', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 4 && data.title.size() <= 160 &&
+        data.category is string && data.category in ['Produit', 'Streamer Studio', 'Feuille de route', 'Annonce'] &&
+        data.summary is string && data.summary.size() >= 10 && data.summary.size() <= 320 &&
+        data.body is string && data.body.size() >= 20 && data.body.size() <= 4000 &&
+        data.publishedLabel is string && data.publishedLabel.size() >= 2 && data.publishedLabel.size() <= 40 &&
+        data.status is string && data.status in ['published', 'draft'] &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPromoContent(data) {
+      return data.keys().hasAll(['title', 'description', 'ctaLabel', 'ctaUrl', 'active', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'description', 'ctaLabel', 'ctaUrl', 'active', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+        data.description is string && data.description.size() >= 10 && data.description.size() <= 360 &&
+        data.ctaLabel is string && data.ctaLabel.size() >= 2 && data.ctaLabel.size() <= 60 &&
+        data.ctaUrl is string && data.ctaUrl.size() >= 1 && data.ctaUrl.size() <= 300 &&
+        data.active is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidContactRequest(data) {
+      return data.keys().hasAll(['name', 'email', 'topic', 'message', 'status', 'userId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'email', 'topic', 'message', 'status', 'userId', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+        data.topic is string && data.topic in [
+          'Achat & Licence 7 €',
+          'Streamer Studio & OBS',
+          'Compte & Sauvegarde',
+          'Partenariat & Presse',
+          'Autre question'
+        ] &&
+        data.message is string && data.message.size() >= 10 && data.message.size() <= 2000 &&
+        data.status is string && data.status in ['new', 'in_progress', 'resolved'] &&
+        isValidId(data.userId) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // /users/{userId} — PII Strictly Isolated
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          (isOwner(userId) && incoming().role == 'member' && incoming().email == request.auth.token.email) ||
+          isAdmin()
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'streamerHandle', 'bio', 'preferredFormat', 'newsletterOptIn', 'role', 'updatedAt'])) ||
+          (isOwner(userId) && incoming().role == existing().role && incoming().email == existing().email &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'streamerHandle', 'bio', 'preferredFormat', 'newsletterOptIn', 'updatedAt']))
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // /admins/{adminId} — Trusted Admin Lookup
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(adminId) &&
+        isValidAdminRecord(incoming()) &&
+        incoming().uid == adminId &&
+        incoming().grantedAt == request.time &&
+        isAdmin();
+      allow update: if false;
+      allow delete: if isValidId(adminId) && isAdmin();
+    }
+
+    // /videos/{videoId} — Public Showcase Catalog, Admin Managed
+    match /videos/{videoId} {
+      allow get: if isValidId(videoId);
+      allow list: if true;
+      allow create: if isValidId(videoId) && isValidVideoItem(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(videoId) && isValidVideoItem(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['code', 'title', 'subtitle', 'category', 'aspectRatio', 'durationLabel', 'status', 'videoUrl', 'posterUrl', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(videoId) && isAdmin();
+    }
+
+    // /mediaAssets/{assetId} — Curated Screenshots & Visuals
+    match /mediaAssets/{assetId} {
+      allow get: if isValidId(assetId);
+      allow list: if true;
+      allow create: if isValidId(assetId) && isValidMediaAsset(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(assetId) && isValidMediaAsset(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'moduleName', 'category', 'imageUrl', 'caption', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(assetId) && isAdmin();
+    }
+
+    // /siteCopy/{copyId} — Editable Commercial Copy
+    match /siteCopy/{copyId} {
+      allow get: if isValidId(copyId);
+      allow list: if true;
+      allow create: if isValidId(copyId) && isValidSiteCopy(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(copyId) && isValidSiteCopy(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['heroTitle', 'heroSubtitle', 'primaryCtaLabel', 'pricingHeadline', 'pricingNote', 'gumroadUrl', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(copyId) && isAdmin();
+    }
+
+    // /news/{newsId} — Official News & Announcements
+    match /news/{newsId} {
+      allow get: if isValidId(newsId) && (existing().status == 'published' || isAdmin());
+      allow list: if resource.data.status == 'published' || isBootstrappedAdmin();
+      allow create: if isValidId(newsId) && isValidNewsArticle(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(newsId) && isValidNewsArticle(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'summary', 'body', 'publishedLabel', 'status', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(newsId) && isAdmin();
+    }
+
+    // /promos/{promoId} — Promotional Showcase Blocks
+    match /promos/{promoId} {
+      allow get: if isValidId(promoId);
+      allow list: if true;
+      allow create: if isValidId(promoId) && isValidPromoContent(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(promoId) && isValidPromoContent(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'ctaLabel', 'ctaUrl', 'active', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(promoId) && isAdmin();
+    }
+
+    // /contactRequests/{requestId} — Support Inquiries
+    match /contactRequests/{requestId} {
+      allow get: if isValidId(requestId) && (
+        (isSignedIn() && existing().userId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow list: if isBootstrappedAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isVerifiedUser() &&
+        isValidId(requestId) &&
+        isValidContactRequest(incoming()) &&
+        incoming().userId == request.auth.uid &&
+        incoming().status == 'new' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(requestId) &&
+        isValidContactRequest(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        );
+      allow delete: if isValidId(requestId) && isAdmin();
+    }
+  }
+}
