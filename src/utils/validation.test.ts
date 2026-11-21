@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildObsOverlayUrl,
+  DEFAULT_DISCORD_INVITE_URL,
   filterVideosByCategory,
   formatSecondsToTimecode,
   getTotalStoryboardSeconds,
@@ -9,11 +10,14 @@ import {
   isSafeHttpUrl,
   isValidEmail,
   OFFICIAL_GUMROAD_URL,
+  resolveDiscordInviteUrl,
   sanitizeSlugId,
   validateContactForm,
   validateProfileUpdate,
 } from './validation';
 import { VideoProductionItem } from '../types/jitalx';
+import { LOCALE_STRINGS } from '../i18n/locale';
+import { APP_LOCALE_STRINGS } from '../i18n/appLocale';
 
 test('isValidEmail validates standard addresses and rejects malformed strings', () => {
   assert.equal(isValidEmail('joueur@jitalx.fr'), true);
@@ -154,4 +158,33 @@ test('security helpers guard URLs, slug IDs and verified admin email', () => {
   assert.equal(isBootstrappedAdminEmail('harzyyouness75@gmail.com', true), true);
   assert.equal(isBootstrappedAdminEmail('harzyyouness75@gmail.com', false), false);
   assert.equal(isBootstrappedAdminEmail('other@example.com', true), false);
+});
+
+test('Discord invite URL falls back safely and accepts valid VITE_DISCORD_INVITE_URL', () => {
+  assert.equal(DEFAULT_DISCORD_INVITE_URL, 'https://discord.gg/rW3z3JQSs');
+  assert.equal(resolveDiscordInviteUrl(undefined), 'https://discord.gg/rW3z3JQSs');
+  assert.equal(resolveDiscordInviteUrl('   '), 'https://discord.gg/rW3z3JQSs');
+  assert.equal(resolveDiscordInviteUrl('javascript:alert(1)'), 'https://discord.gg/rW3z3JQSs');
+  assert.equal(
+    resolveDiscordInviteUrl('https://discord.gg/custom-jitalx'),
+    'https://discord.gg/custom-jitalx'
+  );
+});
+
+test('i18n locale.ts and appLocale.ts maintain 100% EN/FR key parity with non-empty values', () => {
+  const localeFrKeys = Object.keys(LOCALE_STRINGS.fr).sort();
+  const localeEnKeys = Object.keys(LOCALE_STRINGS.en).sort();
+  assert.deepEqual(localeFrKeys, localeEnKeys);
+  for (const key of localeFrKeys) {
+    assert.ok(LOCALE_STRINGS.fr[key as keyof typeof LOCALE_STRINGS.fr].trim().length > 0);
+    assert.ok(LOCALE_STRINGS.en[key as keyof typeof LOCALE_STRINGS.en].trim().length > 0);
+  }
+
+  const appFrKeys = Object.keys(APP_LOCALE_STRINGS.fr).sort();
+  const appEnKeys = Object.keys(APP_LOCALE_STRINGS.en).sort();
+  assert.deepEqual(appFrKeys, appEnKeys);
+  for (const key of appFrKeys) {
+    assert.ok(APP_LOCALE_STRINGS.fr[key as keyof typeof APP_LOCALE_STRINGS.fr].trim().length > 0);
+    assert.ok(APP_LOCALE_STRINGS.en[key as keyof typeof APP_LOCALE_STRINGS.en].trim().length > 0);
+  }
 });

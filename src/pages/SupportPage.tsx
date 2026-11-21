@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
-import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ChevronDown } from 'lucide-react';
 import { useSite } from '../context/SiteContext';
 import { DEFAULT_FAQ_ENTRIES } from '../data/catalog';
 import { ContactTopic } from '../types/jitalx';
-import { ALLOWED_CONTACT_TOPICS, validateContactForm } from '../utils/validation';
+import {
+  ALLOWED_CONTACT_TOPICS,
+  DISCORD_INVITE_URL,
+  validateContactForm,
+} from '../utils/validation';
+import { DiscordIcon } from '../components/DiscordIcon';
+import { getAppLocaleStrings } from '../i18n/appLocale';
 
 export function SupportPage() {
   const { user, profile, submitContactRequest, navigate } = useSite();
   const [openFaqId, setOpenFaqId] = useState<string>(DEFAULT_FAQ_ENTRIES[0].id);
+  const appLocale = getAppLocaleStrings('fr');
 
   const [name, setName] = useState(profile?.displayName || user?.displayName || '');
   const [email, setEmail] = useState(profile?.email || user?.email || '');
@@ -58,6 +65,28 @@ export function SupportPage() {
           sauvegarde de vos données, ou écrivez-nous via le formulaire ci-dessous.
         </p>
       </header>
+
+      {/* Discord Community & Support Quick Link */}
+      <section className="rounded-2xl border border-[#5865F2]/30 bg-[#121224] p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div className="space-y-1.5 max-w-2xl">
+          <h2 className="font-display text-xl font-semibold text-white flex items-center gap-2.5">
+            <DiscordIcon className="w-5 h-5 text-[#5865F2] shrink-0" />
+            <span>{appLocale.discordSupportTitle}</span>
+          </h2>
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            {appLocale.discordSupportDescription}
+          </p>
+        </div>
+        <a
+          href={DISCORD_INVITE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-[#5865F2] hover:bg-[#4752C4] rounded-lg transition-colors whitespace-nowrap shrink-0"
+        >
+          <span>{appLocale.discordSupportCta}</span>
+          <ArrowUpRight className="w-4 h-4" />
+        </a>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* FAQ Accordion */}

@@ -3,11 +3,17 @@ import { useSite } from '../context/SiteContext';
 import { JITALX_ASSETS } from '../data/assets';
 import { MediaFrame } from '../components/MediaFrame';
 import { MotionSequencePlayer } from '../components/MotionSequencePlayer';
+import { DiscordIcon } from '../components/DiscordIcon';
+import { DISCORD_INVITE_URL } from '../utils/validation';
+import { getLocaleStrings } from '../i18n/locale';
+import { getAppLocaleStrings } from '../i18n/appLocale';
 
 export function HomePage() {
   const { navigate, siteCopy, videos, promos, setSelectedVideoCode } = useSite();
   const mainVideo = videos.find((v) => v.code === 'A') ?? videos[0];
   const activePromos = promos.filter((p) => p.active);
+  const locale = getLocaleStrings('fr');
+  const appLocale = getAppLocaleStrings('fr');
 
   const openVideo = (code: string) => {
     setSelectedVideoCode(code);
@@ -59,10 +65,22 @@ export function HomePage() {
                 </button>
               </div>
 
-              <p className="text-xs text-zinc-500">
-                Paiement unique sur Gumroad · Sans abonnement mensuel · Captures réelles de
-                l’application
-              </p>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-500">
+                <span>
+                  Paiement unique sur Gumroad · Sans abonnement mensuel · Captures réelles
+                </span>
+                <a
+                  href={DISCORD_INVITE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={appLocale.discordQuickLinkAria}
+                  className="inline-flex items-center gap-1.5 font-medium text-[#A5B4FC] hover:text-white transition-colors whitespace-nowrap"
+                >
+                  <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+                  <span>{appLocale.discordQuickLink}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
 
             <div className="lg:col-span-6">
@@ -325,6 +343,32 @@ export function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Discord Community Section */}
+      <section className="max-w-7xl mx-auto px-5 sm:px-8">
+        <div className="rounded-2xl border border-[#5865F2]/30 bg-gradient-to-br from-[#141326] via-[#11101C] to-[#0E101E] p-8 sm:p-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="space-y-2.5 max-w-2xl">
+            <p className="text-xs font-medium text-[#8EA1E1]">{locale.communityEyebrow}</p>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {locale.communityTitle}
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
+              {locale.communityDescription}
+            </p>
+          </div>
+
+          <a
+            href={DISCORD_INVITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm font-semibold text-white bg-[#5865F2] hover:bg-[#4752C4] rounded-lg transition-colors whitespace-nowrap shrink-0"
+          >
+            <DiscordIcon className="w-5 h-5 shrink-0" />
+            <span>{locale.joinDiscordCommunity}</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
 
       {/* Commercial Conversion Block — 7 € Gumroad */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8">

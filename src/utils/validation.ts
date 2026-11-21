@@ -45,7 +45,21 @@ export const ALLOWED_CONTACT_TOPICS: readonly ContactTopic[] = [
 ] as const;
 
 export const OFFICIAL_GUMROAD_URL = 'https://gumroad.com/l/jitalx';
+export const DEFAULT_DISCORD_INVITE_URL = 'https://discord.gg/rW3z3JQSs';
 export const BOOTSTRAPPED_ADMIN_EMAIL = 'harzyyouness75@gmail.com';
+
+export function resolveDiscordInviteUrl(envValue?: string): string {
+  const trimmed = (envValue ?? '').trim();
+  if (!trimmed) return DEFAULT_DISCORD_INVITE_URL;
+  return isSafeHttpUrl(trimmed) ? trimmed : DEFAULT_DISCORD_INVITE_URL;
+}
+
+const viteEnv =
+  typeof import.meta !== 'undefined'
+    ? (import.meta as { env?: Record<string, string | undefined> }).env
+    : undefined;
+
+export const DISCORD_INVITE_URL = resolveDiscordInviteUrl(viteEnv?.VITE_DISCORD_INVITE_URL);
 
 export interface ValidationResult {
   valid: boolean;

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { useSite } from '../context/SiteContext';
 import { PageId } from '../types/jitalx';
+import { DiscordIcon } from './DiscordIcon';
+import { DISCORD_INVITE_URL } from '../utils/validation';
+import { getLocaleStrings } from '../i18n/locale';
 
 const PRIMARY_LINKS: { id: PageId; label: string }[] = [
   { id: 'decouvrir', label: 'Découvrir' },
@@ -15,6 +18,7 @@ export function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
+  const locale = getLocaleStrings('fr');
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -144,8 +148,20 @@ export function Navbar() {
           </div>
         </nav>
 
-        {/* Zone 3: Single Primary Action + Mobile Menu Trigger */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Zone 3: Discreet Discord Icon + Primary Action + Mobile Menu Trigger */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <a
+            href={DISCORD_INVITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={locale.discordButtonAria}
+            title={locale.discordButtonAria}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#C7CEFF] bg-[#5865F2]/12 border border-[#5865F2]/35 hover:bg-[#5865F2] hover:text-white hover:border-[#5865F2] rounded-lg transition-colors whitespace-nowrap shrink-0"
+          >
+            <DiscordIcon className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">{locale.discordButtonLabel}</span>
+          </a>
+
           <button
             type="button"
             onClick={() => handleNav('tarifs')}
@@ -191,6 +207,16 @@ export function Navbar() {
                 </button>
               );
             })}
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="mt-3 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold text-white bg-[#5865F2] hover:bg-[#4752C4] transition-colors"
+            >
+              <DiscordIcon className="w-4 h-4 shrink-0" />
+              <span>{locale.joinDiscordCommunity}</span>
+            </a>
           </nav>
         </div>
       )}

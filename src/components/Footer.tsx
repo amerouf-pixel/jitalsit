@@ -1,9 +1,13 @@
 import { ArrowUpRight } from 'lucide-react';
 import { useSite } from '../context/SiteContext';
 import { PageId } from '../types/jitalx';
+import { DiscordIcon } from './DiscordIcon';
+import { DISCORD_INVITE_URL } from '../utils/validation';
+import { getLocaleStrings } from '../i18n/locale';
 
 export function Footer() {
   const { navigate, siteCopy, user } = useSite();
+  const locale = getLocaleStrings('fr');
 
   const linkGroups: { title: string; links: { id: PageId; label: string }[] }[] = [
     {
@@ -55,7 +59,7 @@ export function Footer() {
               Site officiel, vitrine commerciale et studio vidéo de JITALX — le centre de
               commande numérique conçu pour les gamers et les streamers.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap items-center gap-4">
               <a
                 href={siteCopy.gumroadUrl}
                 target="_blank"
@@ -64,6 +68,17 @@ export function Footer() {
               >
                 <span>Accès complet JITALX sur Gumroad (7 €)</span>
                 <ArrowUpRight className="w-4 h-4" />
+              </a>
+
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-[#5865F2] hover:bg-[#4752C4] rounded-lg transition-colors whitespace-nowrap"
+              >
+                <DiscordIcon className="w-4 h-4 shrink-0" />
+                <span>{locale.joinDiscordCommunity}</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
